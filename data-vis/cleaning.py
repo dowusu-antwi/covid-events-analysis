@@ -120,6 +120,8 @@ def word_tokenize(string, news):
     
     '''
     list_ = []
+    if type(string) != str:
+        return list_
     list_of_string = string.split()
     for n in list_of_string:
         # Distinguish WHO and who
@@ -259,9 +261,19 @@ print("Building shared (between news and tweets) word frequency dictionary...")
 start = time.time()
 shared_dates = sorted(list(set(tweets_dates) & set(news_dates)))
 shared_words = list(set(tweets_words) & set(news_words))
-shared_words_frequency = {'tweets': {word: [] for word in shared_words}, 
-                          'news': {word: [] for word in shared_words}}
-for word in shared_words:
+
+TOP_COUNT = 20
+PAIRS_INDICATOR = False
+NEWS_INDICATOR = True
+top_K_words = get_top_K_words(news_df['title_text'], TOP_COUNT, 
+                              PAIRS_INDICATOR, NEWS_INDICATOR)
+SORT = True
+cumulative_news_words = get_words(top_K_words, SORT)
+
+shared_words_frequency = {'tweets': {word: [] for word in cumulative_news_words}, 
+                          'news': {word: [] for word in cumulative_news_words}}
+
+for word in cumulative_news_words:
     for date in shared_dates:
         # Updates tweets shared word frequencies...
         shared_frequencies = shared_words_frequency['tweets']
@@ -316,3 +328,12 @@ for source in news_sources:
         # Get number shared between the two
         number_shared = len(set(tweets_top_words) & set(news_top_words))
         matches.append(number_shared)
+
+TOP_COUNT = 20
+PAIRS_INDICATOR = False
+NEWS_INDICATOR = False
+top_K_words = get_top_K_words(tweets_df['text'], TOP_COUNT, 
+                              PAIRS_INDICATOR, NEWS_INDICATOR)
+SORT = True
+cumulative_tweets_words = get_words(top_K_words, SORT)
+
