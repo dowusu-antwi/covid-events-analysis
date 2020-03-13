@@ -54,12 +54,9 @@ def correlate_frequency(visual):
     figure.suptitle('Media Source v. Twitter, Keyword Frequency', fontsize=20)
     for index, media_source in enumerate(media):
         # Retrieves seed data (scatter and line) and plots
-        xdata, ydata = get_data(visual, keyword, media_source)
-        scatter_xdata, line_xdata = xdata
-        scatter_ydata, line_ydata = ydata
+        scatter_xdata, scatter_ydata = get_data(visual, keyword, media_source)
 
         axis = axes.flatten()[index] if len(media) > 1 else axes
-        line_axis = sns.lineplot(line_xdata, line_ydata, ax=axis)
         scatter_axis = sns.scatterplot(scatter_xdata, scatter_ydata, 
                                        ax=axis, s=40)
 
@@ -76,10 +73,12 @@ def keyword_matching(visual):
     plt.figure()
     figure = plt.gcf()
     xdata, ydata = get_data(visual)
-    axes = sns.lineplot(xdata, ydata)
+    for source in ydata:
+        data = ydata[source]
+        axes = sns.lineplot(xdata, data, label=source)
     #sns.barplot(...)
     axes.set_title('Keyword Matching')
-    axes.set_xticklabels(xdata, rotation=45, horizontalalignment="center")
+    axes.set_xticklabels([str(x) for x in xdata], rotation=45, horizontalalignment="center")
     return figure, axes
 
 def update_plot(visual, keyword, axes, canvas):
@@ -173,11 +172,7 @@ def get_data(visual, *args):
 
         scatter_xdata, scatter_ydata = (tweets_frequency[keyword],
                                         news_frequency[keyword])
-        intercept, coefficient = train_regressor(scatter_xdata, scatter_ydata)
-        line_xdata = scatter_xdata
-        line_ydata = [float(intercept) + float(coefficient)*x 
-                      for x in range(len(line_xdata))]
-        return (scatter_xdata, line_xdata), (scatter_ydata, line_ydata)
+        return scatter_xdata, scatter_ydata
     if visual == 'Cumulative Twitter Frequency':
         keywords = args[0]
         xdata = cleaning.tweets_dates

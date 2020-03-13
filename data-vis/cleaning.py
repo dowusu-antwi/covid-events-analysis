@@ -199,7 +199,7 @@ start = time.time()
 news_df = split_time(news_df, 'Time_stamp')
 print("VM runtime (split time): %s" % (time.time() - start))
 
-news_sources = news_df['source'].unique()
+news_sources = list(news_df['source'].unique())
 news_dates = news_df['Time_stamp'].unique()
 tweets_dates = tweets_df['timestamp'].dropna().unique()
 news_words = set()
@@ -219,7 +219,7 @@ for source in news_sources:
         record_filter = ((news_df['source'] == source) &
                          (news_df['Time_stamp'] == date))
         filtered_records = news_df[record_filter]
-        TOP_COUNT = 15
+        TOP_COUNT = 20
         PAIRS_INDICATOR = False
         NEWS_INDICATOR = True
         top_K_words = get_top_K_words(filtered_records['title_text'], TOP_COUNT,
@@ -231,7 +231,7 @@ aggregate_news_word_frequency = {}
 for date in news_dates:
     record_filter = news_df['Time_stamp'] == date
     filtered_records = news_df[record_filter]
-    TOP_COUNT = 15
+    TOP_COUNT = 20
     PAIRS_INDICATOR = False
     NEWS_INDICATOR = True
     top_K_words = get_top_K_words(filtered_records['title_text'], TOP_COUNT,
@@ -245,7 +245,7 @@ tweets_word_frequency = {}
 for date in tweets_dates:
     record_filter = tweets_df['timestamp'] == date
     filtered_records = tweets_df[record_filter]
-    TOP_COUNT = 15
+    TOP_COUNT = 20
     PAIRS_INDICATOR = False
     NEWS_INDICATOR = False
     top_K_words = get_top_K_words(filtered_records['text'], TOP_COUNT, 
@@ -297,27 +297,22 @@ for word in tweets_words:
 print("VM runtime (cumulative): %s" % (time.time()-start))
 
 ## Top K Matches Plot
-keyword_matches = []
-TOP_K = 15
+keyword_matches = {source: [] for source in news_sources}
+TOP_K = 20
 SORT = True
-for date in shared_dates:
-    print("CURRENT DATE: %s" % date)
-    # First, get top K tweets words
-    word_frequency_pairs = tweets_word_frequency[date]
-    sorted_words = get_words(word_frequency_pairs, SORT)
-    print("sorted twitter words: %s" % sorted_words)
-    tweets_top_words = sorted_words[:TOP_K]
+for source in news_sources:
+    matches = keyword_matches[source]
+    for date in shared_dates:
+        # First, get top K tweets words
+        word_frequency_pairs = tweets_word_frequency[date]
+        sorted_words = get_words(word_frequency_pairs, SORT)
+        tweets_top_words = sorted_words[:TOP_K]
 
-    # Next, get top K news words
-    word_frequency_pairs = aggregate_news_word_frequency[date]
-    sorted_words = get_words(word_frequency_pairs, SORT)
-    print("sorted news words: %s" % sorted_words)
-    news_top_words = sorted_words[:TOP_K]
+        # Next, get top K news words
+        word_frequency_pairs = news_word_frequency[source][date]
+        sorted_words = get_words(word_frequency_pairs, SORT)
+        news_top_words = sorted_words[:TOP_K]
 
-    # Get number shared between the two
-    number_shared = len(set(tweets_top_words) & set(news_top_words))
-    keyword_matches.append(number_shared)
-
-################################################################################
-#for source in media_sources:
-#    sns.lineplot(list(shared_dates), tweets_news_matches[source])
+        # Get number shared between the two
+        number_shared = len(set(tweets_top_words) & set(news_top_words))
+        matches.append(number_shared)
