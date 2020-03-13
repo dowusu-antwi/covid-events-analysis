@@ -207,11 +207,11 @@ tweets_words = set()
 
 def get_words(word_frequency_pairs, sort=False):
     if sort:
-        return [word for word in word_frequency_pairs]
+        return [word for word, frequency in word_frequency_pairs]
     return {word: frequency for word, frequency in word_frequency_pairs}
 
 ## Initial dictionaries for building datastructures necessary for plot seeding.
-print("Building news word frequency dictionary...")
+print("Building news word frequency dictionaries (by source + aggregate)...")
 start = time.time()
 news_word_frequency = {source: dict() for source in news_sources}
 for source in news_sources:
@@ -227,9 +227,7 @@ for source in news_sources:
         news_word_frequency[source][date] = top_K_words
         news_words.update(get_words(top_K_words))
 
-print("VM runtime (news dict): %s" % (time.time() - start))
-
-aggregate_news_word_frequency = {date: dict()}
+aggregate_news_word_frequency = {}
 for date in news_dates:
     record_filter = news_df['Time_stamp'] == date
     filtered_records = news_df[record_filter]
@@ -239,10 +237,11 @@ for date in news_dates:
     top_K_words = get_top_K_words(filtered_records['title_text'], TOP_COUNT,
                                   PAIRS_INDICATOR, NEWS_INDICATOR)
     aggregate_news_word_frequency[date] = top_K_words
+print("VM runtime (news dict): %s" % (time.time() - start))
 
 print("Building tweets word frequency dictionary...")
 start = time.time()
-tweets_word_frequency = {date: dict() for date in tweets_dates}
+tweets_word_frequency = {}
 for date in tweets_dates:
     record_filter = tweets_df['timestamp'] == date
     filtered_records = tweets_df[record_filter]
@@ -259,13 +258,13 @@ print("VM runtime (news dict): %s" % (time.time() - start))
 print("Building shared (between news and tweets) word frequency dictionary...")
 start = time.time()
 shared_dates = sorted(list(set(tweets_dates) & set(news_dates)))
-shared_words = set(tweets_words) & set(news_words)
-shared_words_frequency = {'tweets': {word: [] for word in tweets_words}, 
-                          'news': {word: [] for word in news_words}}
-shared_frequencies = shared_words_frequency['tweets']
+shared_words = list(set(tweets_words) & set(news_words))
+shared_words_frequency = {'tweets': {word: [] for word in shared_words}, 
+                          'news': {word: [] for word in shared_words}}
 for word in shared_words:
     for date in shared_dates:
         # Updates tweets shared word frequencies...
+        shared_frequencies = shared_words_frequency['tweets']
         word_frequency_pairs = tweets_word_frequency[date]
         word_frequencies = get_words(word_frequency_pairs)
         if word in word_frequencies:
@@ -274,7 +273,8 @@ for word in shared_words:
             shared_frequencies[word].append(0)
 
         # Updates news shared words frequencies...
-        word_frequency_pairs = news_word_frequency[date]
+        shared_frequencies = shared_words_frequency['news']
+        word_frequency_pairs = aggregate_news_word_frequency[date]
         word_frequencies = get_words(word_frequency_pairs)
         if word in word_frequencies:
             shared_frequencies[word].append(word_frequencies[word])
@@ -298,51 +298,26 @@ print("VM runtime (cumulative): %s" % (time.time()-start))
 
 ## Top K Matches Plot
 keyword_matches = []
-TOP_K = 10
+TOP_K = 15
 SORT = True
 for date in shared_dates:
-    
+    print("CURRENT DATE: %s" % date)
     # First, get top K tweets words
     word_frequency_pairs = tweets_word_frequency[date]
     sorted_words = get_words(word_frequency_pairs, SORT)
+    print("sorted twitter words: %s" % sorted_words)
     tweets_top_words = sorted_words[:TOP_K]
 
     # Next, get top K news words
     word_frequency_pairs = aggregate_news_word_frequency[date]
     sorted_words = get_words(word_frequency_pairs, SORT)
+    print("sorted news words: %s" % sorted_words)
     news_top_words = sorted_words[:TOP_K]
 
     # Get number shared between the two
     number_shared = len(set(tweets_top_words) & set(news_top_words))
     keyword_matches.append(number_shared)
 
-tweets_news_matches = {source: [] for source in news_sources}
-
-total_news_words = set()
-for source in news_sources:
-    for date in shared_dates:
-        if date in tweets_word_frequency:
-            daily_tweets_words = set(get_words(tweets_word_frequency[date]).keys())
-            daily_news_words = set(get_words(news_word_frequency[source][date]).keys())
-            news_words.update(news_words)
-            match_count = len(news_words & tweets_words)
-            tweets_news_matches[source].append(match_count)
-
-word_frequency_news = {word:[] for word in total_news_words}
-for word in total_news_words:
-    for date in shared_dates:
-        count = 0
-        for source in news_sources:
-            word_frequency_pairs = news_word_frequency[source][date]
-            word_to_frequency = get_words(word_frequency_pairs)
-            if word in word_to_frequency:
-                count += word_to_frequency[word]
-        word_frequency_news[word].append(count)
 ################################################################################
 #for source in media_sources:
 #    sns.lineplot(list(shared_dates), tweets_news_matches[source])
-
-    
-
-
-#We can read csv files of Mar and Feb respectively, and to compare them.

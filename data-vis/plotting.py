@@ -16,27 +16,25 @@ plt.switch_backend('Qt5Agg')
 ##############################################################################
 
 
+
 def plot_seed(visual):
     if visual == 'Media v. Twitter Frequency Comparison':
         return correlate_frequency(visual)
     if visual == 'Cumulative Twitter Frequency':
         return cumulative_frequency(visual)
     if visual == 'Keyword Matching':
-        return ''
+        return keyword_matching(visual)
 
 def cumulative_frequency(visual):
     '''
     Plots cumulative keyword frequency, with random data, to be updated later.
     '''
-    keywords = list(cleaning.word_frequency)
+    keywords = cleaning.tweets_words
     xdata, ydata = get_data(visual, keywords)
     plt.figure()
-    print(xdata)
-    print(ydata)
     for data in ydata:
         axes = sns.lineplot(xdata, data)
-    axes.set_title(('Cumulative Twitter Keyword Frequency (Keyword: %s)' 
-                    % keyword.upper()))
+    axes.set_title('Cumulative Twitter Keywords Frequency')
     axes.set_xlabel('Daily Bins')
     axes.set_ylabel('Twitter Keyword Frequency (Cumulative)')
     figure = plt.gcf()
@@ -72,12 +70,17 @@ def correlate_frequency(visual):
         axis.set_ylabel('Twitter Keyword Frequency (Daily Bins)')
     return figure, axes
 
-def matches(visual):
+def keyword_matching(visual):
+    '''
+    '''
     plt.figure()
-    keyword = 'coronavirus'
-    media_sources = ['the-verge', 'bloomberg']
-    xdata, ydata = get_data(visual, keyword, media_sources)
-    axes = plt.hist(xdata, [data for data in ydata])
+    figure = plt.gcf()
+    xdata, ydata = get_data(visual)
+    axes = sns.lineplot(xdata, ydata)
+    #sns.barplot(...)
+    axes.set_title('Keyword Matching')
+    axes.set_xticklabels(xdata, rotation=45, horizontalalignment="center")
+    return figure, axes
 
 def update_plot(visual, keyword, axes, canvas):
     '''
@@ -102,23 +105,23 @@ def update_plot(visual, keyword, axes, canvas):
         # Clear axis, get max for new dataset, set new axis limits
         scatter_xdata, line_xdata = xdata
         scatter_ydata, line_ydata = ydata
-        #axis.clear()
-        xmax = max([max(scatter_xdata), max(line_xdata)])+2
-        ymax = max([max(scatter_ydata), max(line_ydata)])+2
-        axis.set_xlim([-2, xmax+2])
-        axis.set_ylim([-2, ymax+2])
-        print(scatter_xdata)
-        print(scatter_ydata)
+        axis.clear()
+        #xmax = max([max(scatter_xdata), max(line_xdata)])+2
+        #ymax = max([max(scatter_ydata), max(line_ydata)])+2
+        #axis.set_xlim([-2, xmax+2])
+        #axis.set_ylim([-2, ymax+2])
+        #print(scatter_xdata)
+        #print(scatter_ydata)
 
         # Plot new axis data, scatter and line
-        #axis.scatter(scatter_xdata, scatter_ydata)
-        #axis.plot(line_xdata, line_ydata)
-        collection = collections[0]
-        line = lines[0]
-        offsets = [[x,y] for x,y in zip(scatter_xdata, scatter_ydata)]
-        collection.set_offsets(offsets)
-        line.set_xdata(line_xdata)
-        line.set_ydata(line_ydata)
+        axis.scatter(scatter_xdata, scatter_ydata)
+        axis.plot(line_xdata, line_ydata)
+        #collection = collections[0]
+        #line = lines[0]
+        #offsets = [[x,y] for x,y in zip(scatter_xdata, scatter_ydata)]
+        #collection.set_offsets(offsets)
+        #line.set_xdata(line_xdata)
+        #line.set_ydata(line_ydata)
 
         # update title and axes labels
         axis.set_title((media_source + ' v. Twitter Keyword Frequency, '
@@ -138,6 +141,20 @@ def update_plot(visual, keyword, axes, canvas):
     #axes.set_title(title)
     #canvas.draw()
 
+'''
+Correlation
+xdata: shared_words_frequency['tweets'][keyword]
+ydata: shared_words_frequency['news'][keyword]
+
+Cumulative
+xdata: shared_dates
+ydata: cumulative_tweets_frequency[keyword]
+
+Match Plot
+xdata: shared_dates
+ydata: keyword_matches
+'''
+
 def get_data(visual, *args):
     '''
     Gets data associated with the given media source and keyword.
@@ -151,23 +168,25 @@ def get_data(visual, *args):
     '''
     if visual == 'Media v. Twitter Frequency Comparison':
         keyword, media_source = args
-        scatter_xdata, scatter_ydata = (cleaning.word_frequency[keyword], 
-                                        cleaning.word_frequency_news[keyword])
-        print(len(scatter_xdata),len(scatter_ydata))
+        tweets_frequency = cleaning.shared_words_frequency['tweets']
+        news_frequency = cleaning.shared_words_frequency['news']
+
+        scatter_xdata, scatter_ydata = (tweets_frequency[keyword],
+                                        news_frequency[keyword])
         intercept, coefficient = train_regressor(scatter_xdata, scatter_ydata)
         line_xdata = scatter_xdata
-        line_ydata = [float(intercept) + float(coefficient)*x for x in range(len(line_xdata))]
+        line_ydata = [float(intercept) + float(coefficient)*x 
+                      for x in range(len(line_xdata))]
         return (scatter_xdata, line_xdata), (scatter_ydata, line_ydata)
     if visual == 'Cumulative Twitter Frequency':
         keywords = args[0]
-        xdata = list(cleaning.tweets_dates)
-        ydata = [cleaning.word_frequency[keyword] for keyword in keywords]
-        #xdata, ydata = range(60), [get_rand_line(60) for i in range(5)]
+        xdata = cleaning.tweets_dates
+        tweets_frequency = cleaning.cumulative_tweets_frequency
+        ydata = [tweets_frequency[keyword] for keyword in keywords]
         return xdata, ydata
     if visual == 'Keyword Matching':
-        xdata = list(cleaning.shared_dates)
-        news_sources = list(cleaning.tweets_news_matches.keys())
-        ydata = [cleaning.tweets_news_matches[source] for source in cleaning.news_sources]
+        xdata = cleaning.shared_dates
+        ydata = cleaning.keyword_matches
         return xdata, ydata
 
 def get_rand_data(xsize, ysize):

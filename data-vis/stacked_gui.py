@@ -98,19 +98,27 @@ if __name__ == "__main__":
     
     app_stack = AppStack()
     visuals = {0: 'Media v. Twitter Frequency Comparison', 
-             1: 'Cumulative Twitter Frequency'}
+             1: 'Cumulative Twitter Frequency',
+             2: 'Keyword Matching'}
     
-    main_app = gui.App(False)
+    SEED_APPLICATION = False
+
+    main_app = gui.App(SEED_APPLICATION)
     figure, axes = plotting.plot_seed(visuals[0])
     canvas = main_app.embed_figure(figure, [0, 0, 0.8, 0.85])
-    keywords = list(cleaning.words & cleaning.news_words)
+    keywords = cleaning.shared_words
     main_app.embed_data_selector(keywords, [0.8, 0, 0.2, 0.85],
     			 canvas, visuals[0]) 
     app_stack.add_to_stack(main_app, 'Frequency Correlation')   
  
-    main_app = gui.App(False)
+    main_app = gui.App(SEED_APPLICATION)
     figure, axes = plotting.plot_seed(visuals[1])
     canvas = main_app.embed_figure(figure, [0,0,0.965,0.9])
     app_stack.add_to_stack(main_app, 'Cumulative Frequency')
+
+    main_app = gui.App(SEED_APPLICATION)
+    figure, axes = plotting.plot_seed(visuals[2])
+    main_app.embed_figure(figure, [0,0,0.965,0.9])
+    app_stack.add_to_stack(main_app, 'Matches')
 
     app_stack.showMaximized()
