@@ -214,7 +214,6 @@ def get_words(word_frequency_pairs, sort=False):
 print("Building news word frequency dictionary...")
 start = time.time()
 news_word_frequency = {source: dict() for source in news_sources}
-aggregate_news_word_frequency = {date: dict()}
 for source in news_sources:
     for date in news_dates:
         record_filter = ((news_df['source'] == source) &
@@ -230,10 +229,13 @@ for source in news_sources:
 
 print("VM runtime (news dict): %s" % (time.time() - start))
 
-
+aggregate_news_word_frequency = {date: dict()}
 for date in news_dates:
     record_filter = news_df['Time_stamp'] == date
     filtered_records = news_df[record_filter]
+    TOP_COUNT = 15
+    PAIRS_INDICATOR = False
+    NEWS_INDICATOR = True
     top_K_words = get_top_K_words(filtered_records['title_text'], TOP_COUNT,
                                   PAIRS_INDICATOR, NEWS_INDICATOR)
     aggregate_news_word_frequency[date] = top_K_words
