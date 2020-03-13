@@ -9,7 +9,8 @@ import pandas as pd
 newsapi = NewsApiClient(api_key='2fd12bd819ec4bd79434f7b150f0d4ba')
 #getting the dates that are targeted to scape news from
 dates = []
-[dates.append('2020-02-'+ str(i)) for i in range(20,30)]
+#The limit is getting the news 1 month back
+[dates.append('2020-02-'+ str(i)) for i in range(11,30)]
 #specifying the 9 targeted sources
 media_list = ['cnn', 'cnbc','reuters', 'the-wall-street-journal','bloomberg',
               'the-washington-post','the-verge','vice-news','buzzfeed']
