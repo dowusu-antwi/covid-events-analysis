@@ -1,4 +1,4 @@
-import cleaning
+from execution import *
 import gui
 import plotting
 import sys
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     main_app = gui.App(SEED_APPLICATION)
     figure, axes = plotting.plot_seed(visuals[0])
     canvas = main_app.embed_figure(figure, [0, 0, 0.8, 0.85])
-    keywords = cleaning.cumulative_news_words
+    keywords = cumulative_news_words
     main_app.embed_data_selector(keywords, [0.8, 0, 0.2, 0.85],
     			 canvas, visuals[0]) 
     app_stack.add_to_stack(main_app, 'Frequency Correlation')   
@@ -119,7 +119,6 @@ if __name__ == "__main__":
     main_app = gui.App(SEED_APPLICATION)
     figure, axes = plotting.plot_seed(visuals[2])
     canvas = main_app.embed_figure(figure, [0,0,0.8,0.85])
-    news_sources = cleaning.news_sources
     main_app.embed_data_selector(news_sources, [0.8, 0, 0.2, 0.85],
                                  canvas, visuals[2])
     app_stack.add_to_stack(main_app, 'Matches')

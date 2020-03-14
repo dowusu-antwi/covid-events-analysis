@@ -6,6 +6,7 @@ import time
 import matplotlib.pyplot as plt
 plt.switch_backend('Qt5Agg')
 
+
 stopwords = set(['a', 'also', 'an', 'and', 'are', 'as', 'at', 'be',
                  'but', 'by', 'for', 'from', 'have','has','he', 'how', 'i',
                  'ii', 'iii','in', 'in', 'is', 'it','its','it\'s','not','of',
@@ -13,8 +14,10 @@ stopwords = set(['a', 'also', 'an', 'and', 'are', 'as', 'at', 'be',
                  'through','to', 'was', 'we', 'were', 'which', 'will', 'with',
                  'yet','you'])
 
+
 stopwords_for_news = set(['wall','street','journal','washington','post', 'cnn',
                           'reuters', 'buzzfeed', 'verge','bloomberg', 'cnbc'])
+
 
 def file_is_csv(absolute_path):
     '''
@@ -23,10 +26,12 @@ def file_is_csv(absolute_path):
     '''
     return absolute_path[::-1][:3][::-1] == 'csv'
 
+
 def read_csv(path, df_header, data_type=None):
     '''
-    Creates an empty seed dataframe, and recursively finds all CSV files stored,     saving the contents into a dataframe with the columns specified by the
-     dataframe header parameter.
+    Creates an empty seed dataframe, and recursively finds all CSV files stored,     
+    saving the contents into a dataframe with the columns specified by the
+    dataframe header parameter.
 
     Inputs:
      path (string): file path to CSV files,
@@ -37,6 +42,7 @@ def read_csv(path, df_header, data_type=None):
     
     df = pd.DataFrame(columns=df_header)
     return find_files(path, df_header, df, data_type)
+
 
 def find_files(path, df_header, df, data_type):
     '''
@@ -80,19 +86,22 @@ def find_files(path, df_header, df, data_type):
 
     # Removes empty rows and resets index to reflect new row count.
     df = df.dropna(axis=0)
+    df = df.drop_duplicates()
     df.reset_index(drop=True, inplace=True)
     return df
 
+
 def split_time(df, column):
     '''
-    Converts time stamp values to year-month-day pandas datetime objects.
+    Pass in the dataframe and the column name containing the date and time,
+    split date from the format of time and return the dataframe
     '''
 
     # strip to year, month, day; then convert to datetime
     convert = lambda x: x[:10] if type(x) == str else float('nan')
-    #convert = lambda x: '-'.join(re.sub(r'[^0-9]',' ',str(x)).strip().split(' ')[:3])
     df[column] = pd.to_datetime(df[column].apply(convert))
     return df
+
 
 def convert_hashtag_list(df,column_name):
     '''
@@ -116,17 +125,14 @@ def get_top_K_hashtag(df,column_name,K=None):
 
 def word_tokenize(string, news):
     '''
-    convert a string to list of words
-    
+    Pass in a string and convert it to list of string matching our criterion
     '''
     list_ = []
     if type(string) != str:
         return list_
     list_of_string = string.split()
     for n in list_of_string:
-        # Distinguish WHO and who
-        string_ = re.sub('^who', '',n)
-        string_ = re.sub('\W', '', string_).lower()
+        string_ = re.sub('\W', '', n).lower()
         string_ = re.sub('^https', '',string_)
             
         if string_ and (string_ not in stopwords): 
@@ -137,203 +143,29 @@ def word_tokenize(string, news):
                 list_.append(string_)
     return list_
 
-def get_top_K_words(df_text,K=None,pairs=False,news=False):
+def get_top_K_words(df_text,K=None,news=False):
+    '''
+    Pass in a dataframe, the column we want to get words from, number of K,
+    and whether the dataframe is the news,and return the a sorted list of 
+    tuples of (top K words and its counts)
+    '''
     word_count = {}
     for i in df_text:
         tokens = word_tokenize(i,news)
-        if pairs:
-            for j in range(len(tokens)-1):
-                word_count[(tokens[j],tokens[j+1])] = word_count.get((tokens[j],tokens[j+1]),0) + 1
-        else:
-            for j in range(len(tokens)):
-                word_count[tokens[j]] = word_count.get(tokens[j],0) + 1
-    word_counts = sorted(word_count.items(), key = lambda x : x[1], reverse = True)
+        for j in range(len(tokens)):
+            word_count[tokens[j]] = word_count.get(tokens[j],0) + 1
+    word_counts = sorted(word_count.items(), key = lambda x : x[1], 
+                         reverse = True)
     if K:
         word_counts = word_counts[:K]
     return word_counts
 
-
-#def filter_top_K_data(df,time = False, count = None,K=None):
-#
-#### Apply filters to the data
-#
-#if time:
-#    time_period = df['time'].unique()
-#    dict_by_time = {}
-#    for i in time_period:
-#        df_i = df[df['time']==i].copy()
-#        dict_by_time[i] = get_top_K_words(df_i,K)
-#    return dict_by_time
-#if count:
-#    df_count = df[df['follwers_count']>=count].copy()
-#    top_k_by_count = get_top_K_words(df_count,K)
-#    return top_k_by_count
-#
-
-
-################################
-#################################
-
-######Execution
-
-
-path = os.getcwd()
-fname = path + '/news_data/february_news/'
-
-# Getting tweets data
-print("Getting tweets data...")
-tweets_header = ['text', 'timestamp', 'hashtags']
-start = time.time()
-sample_data_folder = 'tweets_2.19.5AM'
-tweets_df = read_csv(path+'/data', tweets_header, 'tweets')
-print("VM runtime (tweets): %s" % (time.time() - start))
-start = time.time()
-tweets_df = split_time(tweets_df, 'timestamp').drop_duplicates()
-print("VM runtime (split time): %s" % (time.time() - start))
-
-# Getting news data
-print("Getting news data...")
-news_header = ['source', 'title_text', 'Time_stamp']
-start = time.time()
-news_df = read_csv(path+'/news_data', news_header)
-print("VM runtime (news): %s" % (time.time() - start))
-start = time.time()
-news_df = split_time(news_df, 'Time_stamp')
-print("VM runtime (split time): %s" % (time.time() - start))
-
-news_sources = list(news_df['source'].unique())
-news_dates = news_df['Time_stamp'].unique()
-tweets_dates = tweets_df['timestamp'].dropna().unique()
-news_words = set()
-tweets_words = set()
-
 def get_words(word_frequency_pairs, sort=False):
+    '''
+    Pass in a list of tuples (word and frequency), and return a list of the 
+    words or return a dictionary where the key is the word, the value is 
+    the frequency
+    '''
     if sort:
         return [word for word, frequency in word_frequency_pairs]
     return {word: frequency for word, frequency in word_frequency_pairs}
-
-## Initial dictionaries for building datastructures necessary for plot seeding.
-print("Building news word frequency dictionaries (by source + aggregate)...")
-start = time.time()
-news_word_frequency = {source: dict() for source in news_sources}
-for source in news_sources:
-    for date in news_dates:
-        record_filter = ((news_df['source'] == source) &
-                         (news_df['Time_stamp'] == date))
-        filtered_records = news_df[record_filter]
-        TOP_COUNT = 20
-        PAIRS_INDICATOR = False
-        NEWS_INDICATOR = True
-        top_K_words = get_top_K_words(filtered_records['title_text'], TOP_COUNT,
-                                      PAIRS_INDICATOR, NEWS_INDICATOR)
-        news_word_frequency[source][date] = top_K_words
-        news_words.update(get_words(top_K_words))
-
-aggregate_news_word_frequency = {}
-for date in news_dates:
-    record_filter = news_df['Time_stamp'] == date
-    filtered_records = news_df[record_filter]
-    TOP_COUNT = 20
-    PAIRS_INDICATOR = False
-    NEWS_INDICATOR = True
-    top_K_words = get_top_K_words(filtered_records['title_text'], TOP_COUNT,
-                                  PAIRS_INDICATOR, NEWS_INDICATOR)
-    aggregate_news_word_frequency[date] = top_K_words
-print("VM runtime (news dict): %s" % (time.time() - start))
-
-print("Building tweets word frequency dictionary...")
-start = time.time()
-tweets_word_frequency = {}
-for date in tweets_dates:
-    record_filter = tweets_df['timestamp'] == date
-    filtered_records = tweets_df[record_filter]
-    TOP_COUNT = 20
-    PAIRS_INDICATOR = False
-    NEWS_INDICATOR = False
-    top_K_words = get_top_K_words(filtered_records['text'], TOP_COUNT, 
-                                  PAIRS_INDICATOR, NEWS_INDICATOR)
-    tweets_word_frequency[date] = top_K_words
-    tweets_words.update(get_words(tweets_word_frequency[date]))
-print("VM runtime (news dict): %s" % (time.time() - start))
-
-## Correlation Plot
-print("Building shared (between news and tweets) word frequency dictionary...")
-start = time.time()
-shared_dates = sorted(list(set(tweets_dates) & set(news_dates)))
-shared_words = list(set(tweets_words) & set(news_words))
-
-TOP_COUNT = 20
-PAIRS_INDICATOR = False
-NEWS_INDICATOR = True
-top_K_words = get_top_K_words(news_df['title_text'], TOP_COUNT, 
-                              PAIRS_INDICATOR, NEWS_INDICATOR)
-SORT = True
-cumulative_news_words = get_words(top_K_words, SORT)
-
-shared_words_frequency = {'tweets': {word: [] for word in cumulative_news_words}, 
-                          'news': {word: [] for word in cumulative_news_words}}
-
-for word in cumulative_news_words:
-    for date in shared_dates:
-        # Updates tweets shared word frequencies...
-        shared_frequencies = shared_words_frequency['tweets']
-        word_frequency_pairs = tweets_word_frequency[date]
-        word_frequencies = get_words(word_frequency_pairs)
-        if word in word_frequencies:
-            shared_frequencies[word].append(word_frequencies[word])
-        else:
-            shared_frequencies[word].append(0)
-
-        # Updates news shared words frequencies...
-        shared_frequencies = shared_words_frequency['news']
-        word_frequency_pairs = aggregate_news_word_frequency[date]
-        word_frequencies = get_words(word_frequency_pairs)
-        if word in word_frequencies:
-            shared_frequencies[word].append(word_frequencies[word])
-        else:
-            shared_frequencies[word].append(0)
-print("VM runtime (shared): %s" % (time.time() - start))
-
-## Cumulative Tweets Frequencies Plot
-print("Building cumulative tweets word frequency dictionary..." )
-start = time.time()
-cumulative_tweets_frequency = {word: [] for word in tweets_words}
-for word in tweets_words:
-    for date in tweets_dates:
-        word_frequency_pairs = tweets_word_frequency[date]
-        word_frequencies = get_words(word_frequency_pairs)
-        if word in word_frequencies:
-            cumulative_tweets_frequency[word].append(word_frequencies[word])
-        else:
-            cumulative_tweets_frequency[word].append(0)        
-print("VM runtime (cumulative): %s" % (time.time()-start))
-
-## Top K Matches Plot
-keyword_matches = {source: [] for source in news_sources}
-TOP_K = 20
-SORT = True
-for source in news_sources:
-    matches = keyword_matches[source]
-    for date in shared_dates:
-        # First, get top K tweets words
-        word_frequency_pairs = tweets_word_frequency[date]
-        sorted_words = get_words(word_frequency_pairs, SORT)
-        tweets_top_words = sorted_words[:TOP_K]
-
-        # Next, get top K news words
-        word_frequency_pairs = news_word_frequency[source][date]
-        sorted_words = get_words(word_frequency_pairs, SORT)
-        news_top_words = sorted_words[:TOP_K]
-
-        # Get number shared between the two
-        number_shared = len(set(tweets_top_words) & set(news_top_words))
-        matches.append(number_shared)
-
-TOP_COUNT = 20
-PAIRS_INDICATOR = False
-NEWS_INDICATOR = False
-top_K_words = get_top_K_words(tweets_df['text'], TOP_COUNT, 
-                              PAIRS_INDICATOR, NEWS_INDICATOR)
-SORT = True
-cumulative_tweets_words = get_words(top_K_words, SORT)
-

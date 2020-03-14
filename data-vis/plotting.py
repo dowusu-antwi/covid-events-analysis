@@ -1,13 +1,11 @@
-import cleaning
+from execution import *
 import seaborn as sns
 import matplotlib.pyplot as plt
 '''
 Functions to generate and update seaborn plots.
 '''
+
 plt.switch_backend('Qt5Agg')
-
-##############################################################################
-
 
 def plot_seed(visual):
     '''
@@ -25,12 +23,12 @@ def cumulative_frequency(visual):
     '''
     Plots cumulative keyword frequency, with random data, to be updated later.
     '''
-    keywords = cleaning.tweets_words
+    keywords = cumulative_tweets_words
     xdata, ydata = get_data(visual, keywords)
     plt.figure()
-    for data in ydata:
-        axes = sns.lineplot(xdata, data)
-    plt.legend(cleaning.cumulative_tweets_words)
+    for index, data in enumerate(ydata):
+        axes = sns.lineplot(xdata, data, label=keywords[index])
+    plt.legend(cumulative_tweets_words)
     axes.set_title('Cumulative Twitter Keywords Frequency')
     axes.set_xlabel('Daily Bins')
     axes.set_ylabel('Twitter Keyword Frequency (Cumulative)')
@@ -51,6 +49,7 @@ def correlate_frequency(visual):
     scatter_xdata, scatter_ydata = get_data(visual, keyword)
     nRows, nCols = 1, 1
     figure, axes = plt.subplots(nRows, nCols, figsize=(7,7), sharex=True)
+    print(scatter_xdata, scatter_ydata)
     sns.scatterplot(x = scatter_xdata, y = scatter_ydata, s=40)
     plt.title('Correlate Frequency of Keywords in Tweet and News Titles')
     plt.xlabel('Twitter Keyword Frequency (Daily Bins)')
@@ -90,13 +89,14 @@ def update_plot(visual, keyword, axes, canvas):
         axes = axes[0]
         print(axes)
         axes.clear()
+        xdata = [str(x)[:10] for x in xdata]
         axes.plot(xdata, ydata, label=keyword)
         axes.set_title('Keyword Matching (News Source: %s)' % keyword.upper())
-        axes.set_xticklabels([str(x)[:10] for x in xdata], 
+        axes.set_xticklabels(xdata, 
                              rotation=45, 
                              horizontalalignment="center")
         axes.set_xlabel('Date')
-        axes.set_ylabel('Number of Matches (Among the Top %s Keywords)' % cleaning.TOP_K)
+        axes.set_ylabel('Number of Matches (Among the Top %s Keywords)' % TOP_K)
         canvas.draw()
 
     else:
@@ -129,20 +129,20 @@ def get_data(visual, *args):
     '''
     if visual == 'Media v. Twitter Frequency Comparison':
         keyword = args[0]
-        tweets_frequency = cleaning.shared_words_frequency['tweets']
-        news_frequency = cleaning.shared_words_frequency['news']
+        tweets_frequency = shared_words_frequency['tweets']
+        news_frequency = shared_words_frequency['news']
 
         scatter_xdata, scatter_ydata = (tweets_frequency[keyword],
                                         news_frequency[keyword])
         return scatter_xdata, scatter_ydata
     if visual == 'Cumulative Twitter Frequency':
         keywords = args[0]
-        xdata = cleaning.tweets_dates
-        tweets_frequency = cleaning.cumulative_tweets_frequency
+        xdata = tweets_dates
+        tweets_frequency = cumulative_tweets_frequency
         ydata = [tweets_frequency[keyword] for keyword in keywords]
         return xdata, ydata
     if visual == 'Keyword Matching':
         news_source = args[0]
-        xdata = cleaning.shared_dates
-        ydata = cleaning.keyword_matches[news_source]
+        xdata = shared_dates
+        ydata = keyword_matches[news_source]
         return xdata, ydata
