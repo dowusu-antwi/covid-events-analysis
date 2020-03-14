@@ -137,8 +137,8 @@ class App(QtWidgets.QWidget):
             selection_mode = QtWidgets.QAbstractItemView.SingleSelection
         selector.setSelectionMode(selection_mode)
 
-        # Sets size adjust policy, so column width will be filled to show all of
-        #  the available text.
+        # Sets size adjust policy, so column width will be filled to show all 
+        # of the available text.
         size_adjust_policy = QtWidgets.QAbstractScrollArea.AdjustToContents
         selector.setSizeAdjustPolicy(size_adjust_policy)
         selector.resizeColumnsToContents()

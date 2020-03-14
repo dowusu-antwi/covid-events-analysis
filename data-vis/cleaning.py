@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 plt.switch_backend('Qt5Agg')
 
 
-stopwords = set(['a', 'also', 'an', 'and', 'are', 'as', 'at', 'be',
+stopwords = set(['a', 'also', 'an', 'amp', 'and', 'are', 'as', 'at', 'be',
                  'but', 'by', 'for', 'from', 'have','has','he', 'how', 'i',
                  'ii', 'iii','in', 'in', 'is', 'it','its','it\'s','not','of',
-                 'on','or', 's', 'so','such','that', 'the', 'their', 'this',
-                 'through','to', 'was', 'we', 'were', 'which', 'will', 'with',
-                 'yet','you'])
+                 'on','or', 'rt', 's', 'so','such','that', 'the', 'their', 
+                 'this','through','to', 'was', 'we', 'were', 'which', 'will', 
+                 'with','yet','you'])
 
 
 stopwords_for_news = set(['wall','street','journal','washington','post', 'cnn',
@@ -66,16 +66,19 @@ def find_files(path, df_header, df, data_type):
 
             # Renames the columns that should be saved to the dataframe, and
             #  removes every other column.
-            df_i = pd.read_csv(absolute_path, encoding='ISO-8859-1', header=0)
+            df_i = pd.read_csv(absolute_path, encoding='ISO-8859-1', 
+            	               header=0)
             if data_type == 'tweets':
                 df_i_header = df_i.columns
                 for column in df_i_header:
                     if 'text' in column.lower():
                         df_i.rename(columns={column: 'text'}, inplace=True)
                     elif 'time' in column.lower():
-                        df_i.rename(columns={column: 'timestamp'}, inplace=True)
+                        df_i.rename(columns={column: 'timestamp'}, 
+                        	        inplace=True)
                     elif 'hashtag' in column.lower():
-                        df_i.rename(columns={column: 'hashtags'}, inplace=True)
+                        df_i.rename(columns={column: 'hashtags'}, 
+                        	        inplace=True)
                 extraneous_columns = set(df_i.columns) - set(df_header)
                 df_i = df_i.drop(columns=list(extraneous_columns))
 
@@ -119,7 +122,8 @@ def get_top_K_hashtag(df,column_name,K=None):
     for i in list_:
         for j in i:
             hash_dic[j] = hash_dic.get(j,0) + 1
-    tag_counts = sorted(hash_dic.items(), key = lambda x : x[1], reverse = True)
+    tag_counts = sorted(hash_dic.items(), key = lambda x : x[1], 
+    	                reverse = True)
     top_K_tags = tag_counts[:K]
     return top_K_tags
 
