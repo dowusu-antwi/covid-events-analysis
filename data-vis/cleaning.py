@@ -120,6 +120,8 @@ def word_tokenize(string, news):
     
     '''
     list_ = []
+    if type(string) != str:
+        return list_
     list_of_string = string.split()
     for n in list_of_string:
         # Distinguish WHO and who
@@ -199,7 +201,7 @@ start = time.time()
 news_df = split_time(news_df, 'Time_stamp')
 print("VM runtime (split time): %s" % (time.time() - start))
 
-news_sources = news_df['source'].unique()
+news_sources = list(news_df['source'].unique())
 news_dates = news_df['Time_stamp'].unique()
 tweets_dates = tweets_df['timestamp'].dropna().unique()
 news_words = set()
@@ -219,7 +221,7 @@ for source in news_sources:
         record_filter = ((news_df['source'] == source) &
                          (news_df['Time_stamp'] == date))
         filtered_records = news_df[record_filter]
-        TOP_COUNT = 15
+        TOP_COUNT = 20
         PAIRS_INDICATOR = False
         NEWS_INDICATOR = True
         top_K_words = get_top_K_words(filtered_records['title_text'], TOP_COUNT,
@@ -231,7 +233,7 @@ aggregate_news_word_frequency = {}
 for date in news_dates:
     record_filter = news_df['Time_stamp'] == date
     filtered_records = news_df[record_filter]
-    TOP_COUNT = 15
+    TOP_COUNT = 20
     PAIRS_INDICATOR = False
     NEWS_INDICATOR = True
     top_K_words = get_top_K_words(filtered_records['title_text'], TOP_COUNT,
@@ -245,7 +247,7 @@ tweets_word_frequency = {}
 for date in tweets_dates:
     record_filter = tweets_df['timestamp'] == date
     filtered_records = tweets_df[record_filter]
-    TOP_COUNT = 15
+    TOP_COUNT = 20
     PAIRS_INDICATOR = False
     NEWS_INDICATOR = False
     top_K_words = get_top_K_words(filtered_records['text'], TOP_COUNT, 
@@ -259,9 +261,19 @@ print("Building shared (between news and tweets) word frequency dictionary...")
 start = time.time()
 shared_dates = sorted(list(set(tweets_dates) & set(news_dates)))
 shared_words = list(set(tweets_words) & set(news_words))
-shared_words_frequency = {'tweets': {word: [] for word in shared_words}, 
-                          'news': {word: [] for word in shared_words}}
-for word in shared_words:
+
+TOP_COUNT = 20
+PAIRS_INDICATOR = False
+NEWS_INDICATOR = True
+top_K_words = get_top_K_words(news_df['title_text'], TOP_COUNT, 
+                              PAIRS_INDICATOR, NEWS_INDICATOR)
+SORT = True
+cumulative_news_words = get_words(top_K_words, SORT)
+
+shared_words_frequency = {'tweets': {word: [] for word in cumulative_news_words}, 
+                          'news': {word: [] for word in cumulative_news_words}}
+
+for word in cumulative_news_words:
     for date in shared_dates:
         # Updates tweets shared word frequencies...
         shared_frequencies = shared_words_frequency['tweets']
@@ -297,27 +309,31 @@ for word in tweets_words:
 print("VM runtime (cumulative): %s" % (time.time()-start))
 
 ## Top K Matches Plot
-keyword_matches = []
-TOP_K = 15
+keyword_matches = {source: [] for source in news_sources}
+TOP_K = 20
 SORT = True
-for date in shared_dates:
-    print("CURRENT DATE: %s" % date)
-    # First, get top K tweets words
-    word_frequency_pairs = tweets_word_frequency[date]
-    sorted_words = get_words(word_frequency_pairs, SORT)
-    print("sorted twitter words: %s" % sorted_words)
-    tweets_top_words = sorted_words[:TOP_K]
+for source in news_sources:
+    matches = keyword_matches[source]
+    for date in shared_dates:
+        # First, get top K tweets words
+        word_frequency_pairs = tweets_word_frequency[date]
+        sorted_words = get_words(word_frequency_pairs, SORT)
+        tweets_top_words = sorted_words[:TOP_K]
 
-    # Next, get top K news words
-    word_frequency_pairs = aggregate_news_word_frequency[date]
-    sorted_words = get_words(word_frequency_pairs, SORT)
-    print("sorted news words: %s" % sorted_words)
-    news_top_words = sorted_words[:TOP_K]
+        # Next, get top K news words
+        word_frequency_pairs = news_word_frequency[source][date]
+        sorted_words = get_words(word_frequency_pairs, SORT)
+        news_top_words = sorted_words[:TOP_K]
 
-    # Get number shared between the two
-    number_shared = len(set(tweets_top_words) & set(news_top_words))
-    keyword_matches.append(number_shared)
+        # Get number shared between the two
+        number_shared = len(set(tweets_top_words) & set(news_top_words))
+        matches.append(number_shared)
 
-################################################################################
-#for source in media_sources:
-#    sns.lineplot(list(shared_dates), tweets_news_matches[source])
+TOP_COUNT = 20
+PAIRS_INDICATOR = False
+NEWS_INDICATOR = False
+top_K_words = get_top_K_words(tweets_df['text'], TOP_COUNT, 
+                              PAIRS_INDICATOR, NEWS_INDICATOR)
+SORT = True
+cumulative_tweets_words = get_words(top_K_words, SORT)
+

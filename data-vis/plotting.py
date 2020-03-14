@@ -15,8 +15,6 @@ plt.switch_backend('Qt5Agg')
 
 ##############################################################################
 
-
-
 def plot_seed(visual):
     if visual == 'Media v. Twitter Frequency Comparison':
         return correlate_frequency(visual)
@@ -34,9 +32,11 @@ def cumulative_frequency(visual):
     plt.figure()
     for data in ydata:
         axes = sns.lineplot(xdata, data)
+    plt.legend(cleaning.cumulative_tweets_words)
     axes.set_title('Cumulative Twitter Keywords Frequency')
     axes.set_xlabel('Daily Bins')
     axes.set_ylabel('Twitter Keyword Frequency (Cumulative)')
+    axes.set_xticklabels([str(x)[:10] for x in xdata], rotation=45, horizontalalignment="center")
     figure = plt.gcf()
     return figure, axes
 
@@ -45,41 +45,29 @@ def correlate_frequency(visual):
     Plots four graphs using subplot, with random scatter and line data, to be
      later updated.
     '''
-    media = ['Verge', 'NYTimes', 'BBC', 'CNN']
+
+    figure = plt.figure()
     keyword = 'coronavirus'
-
-    nRows, nCols = 2, 2
-    plt.figure()
+    scatter_xdata, scatter_ydata = get_data(visual, keyword)
+    nRows, nCols = 1, 1
     figure, axes = plt.subplots(nRows, nCols, figsize=(7,7), sharex=True)
-    figure.suptitle('Media Source v. Twitter, Keyword Frequency', fontsize=20)
-    for index, media_source in enumerate(media):
-        # Retrieves seed data (scatter and line) and plots
-        xdata, ydata = get_data(visual, keyword, media_source)
-        scatter_xdata, line_xdata = xdata
-        scatter_ydata, line_ydata = ydata
-
-        axis = axes.flatten()[index] if len(media) > 1 else axes
-        line_axis = sns.lineplot(line_xdata, line_ydata, ax=axis)
-        scatter_axis = sns.scatterplot(scatter_xdata, scatter_ydata, 
-                                       ax=axis, s=40)
-
-        # Updates axis title/labels
-        axis.set_title((media_source + ' v. Twitter Keyword Frequency, Keyword:'
-                        + ' ' + keyword.upper()))
-        axis.set_xlabel(media_source + ' Keyword Frequency (Daily Bins)')
-        axis.set_ylabel('Twitter Keyword Frequency (Daily Bins)')
+    sns.scatterplot(x = scatter_xdata, y = scatter_ydata, s=40)
+    plt.title('Correlate Frequency of Keywords in Tweet and News Titles')
+    plt.xlabel('Twitter Keyword Frequency (Daily Bins)')
+    plt.ylabel('News Keyword Frequency (Daily Bins)')
     return figure, axes
 
 def keyword_matching(visual):
     '''
     '''
-    plt.figure()
-    figure = plt.gcf()
-    xdata, ydata = get_data(visual)
-    axes = sns.lineplot(xdata, ydata)
+    figure = plt.figure()
+    news_source = 'bloomberg'
+    xdata, ydata = get_data(visual, news_source)
+    axes = sns.lineplot(xdata, ydata, label=news_source)
     #sns.barplot(...)
     axes.set_title('Keyword Matching')
-    axes.set_xticklabels(xdata, rotation=45, horizontalalignment="center")
+    axes.set_xticklabels([str(x)[:10] for x in xdata], rotation=45, horizontalalignment="center")
+    axes.set_ylabel('Number of Matches')
     return figure, axes
 
 def update_plot(visual, keyword, axes, canvas):
@@ -90,56 +78,65 @@ def update_plot(visual, keyword, axes, canvas):
      keyword (string): string representing which data to get,
      axes (numpy array): array of axes objects.
     '''
-    # Iterates through axes, gets scatter collections and lines
-    axes_list = axes.flatten() if type(axes) != list else axes
-    for axis in axes_list:
-        collections = axis.collections
-        lines = axis.lines
+   
+    if visual == 'Keyword Matching':
+        xdata, ydata = get_data(visual, keyword)
+        print(ydata)
+        axes = axes[0]
+        print(axes)
+        axes.clear()
+        axes.plot(xdata, ydata, label=keyword)
+        axes.set_title('Keyword Matching (News Source: %s)' % keyword.upper())
+        axes.set_xticklabels([str(x)[:10] for x in xdata], rotation=45, horizontalalignment="center")
+        axes.set_xlabel('Date')
+        axes.set_ylabel('Number of Matches (Among the Top %s Keywords)' % cleaning.TOP_K)
+        canvas.draw()
 
+    else:
+        # Iterates through axes, gets scatter collections and lines
+        #collections = axis.collections
+        #lines = axis.lines
+        
         # Gets new data associated with new keyword, for given media (get from 
         #  title)
-        title = axis.get_title()
-        media_source = title.split(' ')[0]
-        xdata, ydata = get_data(visual, keyword, media_source)
-
+        scatter_xdata, scatter_ydata = get_data(visual, keyword)
+        
         # Clear axis, get max for new dataset, set new axis limits
-        scatter_xdata, line_xdata = xdata
-        scatter_ydata, line_ydata = ydata
-        axis.clear()
+        axes = axes[0]
+        axes.clear()
         #xmax = max([max(scatter_xdata), max(line_xdata)])+2
         #ymax = max([max(scatter_ydata), max(line_ydata)])+2
         #axis.set_xlim([-2, xmax+2])
         #axis.set_ylim([-2, ymax+2])
         #print(scatter_xdata)
         #print(scatter_ydata)
-
+        
         # Plot new axis data, scatter and line
-        axis.scatter(scatter_xdata, scatter_ydata)
-        axis.plot(line_xdata, line_ydata)
+        
+        axes.scatter(scatter_xdata, scatter_ydata)
         #collection = collections[0]
         #line = lines[0]
         #offsets = [[x,y] for x,y in zip(scatter_xdata, scatter_ydata)]
         #collection.set_offsets(offsets)
         #line.set_xdata(line_xdata)
         #line.set_ydata(line_ydata)
-
+        
         # update title and axes labels
-        axis.set_title((media_source + ' v. Twitter Keyword Frequency, '
-                        'Keyword: ' + keyword.upper()))
-        axis.set_xlabel(media_source + ' Keyword Frequency (Daily Bins)')
-        axis.set_ylabel('Twitter Keyword Frequency (Daily Bins)')
+        axes.set_title('Correlate Frequency of Keywords in Tweets and News Titles')
+        axes.set_xlabel('Twitter Keyword Frequency (Daily Bins)')
+        axes.set_ylabel('News Keyword Frequency (Daily Bins)')
 
-    canvas.draw()
+        canvas.draw()
 
-    # lists: axes.collections, axes.lines
-    # line.s/get_x/ydata()
-    # collection.s/get_offsets([[a,b],[c,d],...])
-    # axes.plot(), axes.scatter()
-    
-    #axes = canvas.figure.axes[0]
-    #axes.scatter(xdata, ydata)
-    #axes.set_title(title)
-    #canvas.draw()
+        # lists: axes.collections, axes.lines
+        # line.s/get_x/ydata()
+        # collection.s/get_offsets([[a,b],[c,d],...])
+        # axes.plot(), axes.scatter()
+        
+        #axes = canvas.figure.axes[0]
+        #axes.scatter(xdata, ydata)
+        #axes.set_title(title)
+        #canvas.draw()
 
 '''
 Correlation
@@ -167,17 +164,13 @@ def get_data(visual, *args):
      scatter and line data lists.
     '''
     if visual == 'Media v. Twitter Frequency Comparison':
-        keyword, media_source = args
+        keyword = args[0]
         tweets_frequency = cleaning.shared_words_frequency['tweets']
         news_frequency = cleaning.shared_words_frequency['news']
 
         scatter_xdata, scatter_ydata = (tweets_frequency[keyword],
                                         news_frequency[keyword])
-        intercept, coefficient = train_regressor(scatter_xdata, scatter_ydata)
-        line_xdata = scatter_xdata
-        line_ydata = [float(intercept) + float(coefficient)*x 
-                      for x in range(len(line_xdata))]
-        return (scatter_xdata, line_xdata), (scatter_ydata, line_ydata)
+        return scatter_xdata, scatter_ydata
     if visual == 'Cumulative Twitter Frequency':
         keywords = args[0]
         xdata = cleaning.tweets_dates
@@ -185,8 +178,9 @@ def get_data(visual, *args):
         ydata = [tweets_frequency[keyword] for keyword in keywords]
         return xdata, ydata
     if visual == 'Keyword Matching':
+        news_source = args[0]
         xdata = cleaning.shared_dates
-        ydata = cleaning.keyword_matches
+        ydata = cleaning.keyword_matches[news_source]
         return xdata, ydata
 
 def get_rand_data(xsize, ysize):
@@ -321,3 +315,4 @@ def plot_seaborn(data, keyword):
 
 if __name__ == "__main__":
     pass
+
