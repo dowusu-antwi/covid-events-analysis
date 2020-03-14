@@ -17,7 +17,7 @@ news_df = split_time(news_df, 'Time_stamp')
 
 news_sources = list(news_df['source'].unique())
 news_dates = news_df['Time_stamp'].unique()
-tweets_dates = tweets_df['timestamp'].dropna().unique()
+tweets_dates = sorted(list(tweets_df['timestamp'].dropna().unique()))
 news_words = set()
 tweets_words = set()
 

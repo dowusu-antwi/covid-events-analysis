@@ -25,17 +25,18 @@ def cumulative_frequency(visual):
     '''
     keywords = cumulative_tweets_words
     xdata, ydata = get_data(visual, keywords)
-    plt.figure()
+    print(len(xdata))
+    figure = plt.figure()
     for index, data in enumerate(ydata):
         axes = sns.lineplot(xdata, data, label=keywords[index])
     plt.legend(cumulative_tweets_words)
     axes.set_title('Cumulative Twitter Keywords Frequency')
     axes.set_xlabel('Daily Bins')
     axes.set_ylabel('Twitter Keyword Frequency (Cumulative)')
+    axes.set_xticks(xdata)
     axes.set_xticklabels([str(x)[:10] for x in xdata], 
                          rotation=45,
                          horizontalalignment="center")
-    figure = plt.gcf()
     return figure, axes
 
 
@@ -49,7 +50,6 @@ def correlate_frequency(visual):
     scatter_xdata, scatter_ydata = get_data(visual, keyword)
     nRows, nCols = 1, 1
     figure, axes = plt.subplots(nRows, nCols, figsize=(7,7), sharex=True)
-    print(scatter_xdata, scatter_ydata)
     sns.scatterplot(x = scatter_xdata, y = scatter_ydata, s=40)
     plt.title('Correlate Frequency of Keywords in Tweet and News Titles')
     plt.xlabel('Twitter Keyword Frequency (Daily Bins)')
