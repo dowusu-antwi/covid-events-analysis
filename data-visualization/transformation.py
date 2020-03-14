@@ -1,27 +1,22 @@
 from cleaning import *
+import os
+import time
 
-# Getting news data
-path = os.getcwd()
-fname = path + '/news_data/'
-
-# Getting tweets data
+# Getting tweets and news data
+path = os.path.dirname(os.path.realpath(__file__))
 tweets_header = ['text', 'timestamp']
-sample_data_folder = 'tweets_2.19.5AM'
-tweets_df = read_csv(path+'/data', tweets_header, 'tweets')
+tweets_df = read_csv(path+'/tweets_data', tweets_header, 'tweets')
 tweets_df = split_time(tweets_df, 'timestamp')
 
 news_header = ['source', 'title_text', 'Time_stamp']
 news_df = read_csv(path+'/news_data', news_header)
 news_df = split_time(news_df, 'Time_stamp')
 
-
 news_sources = list(news_df['source'].unique())
 news_dates = news_df['Time_stamp'].unique()
 tweets_dates = sorted(list(tweets_df['timestamp'].dropna().unique()))
 news_words = set()
 tweets_words = set()
-
-
 
 ## Initial dictionaries for building datastructures necessary for plot seeding.
 TOP_COUNT = 20

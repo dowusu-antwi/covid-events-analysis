@@ -1,11 +1,7 @@
 import seaborn as sns
 import pandas as pd
-import re 
+import re
 import os
-import time
-import matplotlib.pyplot as plt
-plt.switch_backend('Qt5Agg')
-
 
 stopwords = set(['a', 'also', 'an', 'amp', 'and', 'are', 'as', 'at', 'be',
                  'but', 'by', 'for', 'from', 'have','has','he', 'how', 'i',
