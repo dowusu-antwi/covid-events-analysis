@@ -124,3 +124,4 @@ if __name__ == "__main__":
     app_stack.add_to_stack(main_app, 'Matches')
 
     app_stack.showMaximized()
+    sys.exit(app_stack.qapp.exec_())
