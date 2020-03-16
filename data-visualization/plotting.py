@@ -6,6 +6,7 @@ Functions to generate and update seaborn plots.
 '''
 
 plt.switch_backend('Qt5Agg')
+AXES_POSITION = [0.1,0.18,0.8,0.7]
 
 def plot_seed(visual):
     '''
@@ -34,6 +35,7 @@ def cumulative_frequency(visual):
     axes.set_ylabel('Twitter Keyword Frequency (Cumulative)')
     axes.set_xticks(xdata)
     axes.set_xticklabels(xdata, rotation=30, horizontalalignment="right")
+    axes.set_position(AXES_POSITION)
     return figure, axes
 
 
@@ -51,6 +53,7 @@ def correlate_frequency(visual):
     plt.title('Correlate Frequency of Keywords in Tweet and News Titles')
     plt.xlabel('Twitter Keyword Frequency (Daily Bins)')
     plt.ylabel('News Keyword Frequency (Daily Bins)')
+    axes.set_position(AXES_POSITION)
     return figure, axes
 
 
@@ -69,6 +72,7 @@ def keyword_matching(visual):
                          horizontalalignment="right")
     axes.set_xlabel('Date')
     axes.set_ylabel('Number of Matches')
+    axes.set_position(AXES_POSITION)
     return figure, axes
 
 
@@ -97,6 +101,7 @@ def update_plot(visual, data_selector, axes, canvas):
         axes.set_xlabel('Date')
         axes.set_ylabel('Number of Matches with Tweets Keywords (Among the Top'
                         ' %s Keywords)' % TOP_K)
+        axes.set_position(AXES_POSITION)
         canvas.draw()
     elif visual == 'Media v. Twitter Frequency Comparison':
         # Gets new data associated with new keyword, for given media (get from 
@@ -114,6 +119,7 @@ def update_plot(visual, data_selector, axes, canvas):
                         ' Titles'))
         axes.set_xlabel('Twitter Keyword Frequency (Daily Bins)')
         axes.set_ylabel('News Keyword Frequency (Daily Bins)')
+        axes.set_position(AXES_POSITION)
         canvas.draw()
     elif visual == 'Cumulative Twitter Frequency':
         keywords = data_selector
@@ -130,6 +136,7 @@ def update_plot(visual, data_selector, axes, canvas):
         axes.set_xlabel(xlabel)
         axes.set_ylabel(ylabel)
         axes.set_xticklabels(xdata, rotation=30, horizontalalignment="right")
+        axes.set_position(AXES_POSITION)
         canvas.draw()
 
         
